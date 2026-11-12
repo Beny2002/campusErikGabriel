@@ -1,6 +1,9 @@
 package es.academia.campushub.service;
 
 import es.academia.campushub.controller.dto.*;
+import es.academia.campushub.entity.Departamento;
+import es.academia.campushub.repository.DepartamentoRepository;
+import es.academia.campushub.util.exception.InvalidInputException;
 import es.academia.campushub.util.exception.PersistenciaPendienteException;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -9,8 +12,16 @@ import org.springframework.stereotype.Service;
  * Punto de entrada de la tarea. Sustituye cada stub por una implementación real. NO hay entidades,
  * repositorios ni documentos entregados.
  */
+
 @Service
 public class CampusHubServiceImpl implements CampusHubService {
+
+  private final DepartamentoRepository departamentoRepository;
+
+  public CampusHubServiceImpl(DepartamentoRepository departamentoRepository) {
+    this.departamentoRepository = departamentoRepository;
+  }
+
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
     throw new PersistenciaPendienteException("crearGrupo");
@@ -18,7 +29,13 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public DepartamentoResponse crearDepartamento(CreateDepartamentoRequest request) {
-    throw new PersistenciaPendienteException("crearDepartamento");
+    if (request.nombre() == null || request.nombre().isBlank()) {
+      throw new InvalidInputException("El nombre del departamento es obligatorio");
+    }
+    Departamento departamento = new Departamento();
+    departamento.setNombre(request.nombre().trim());
+    Departamento guardado = departamentoRepository.save(departamento);
+    return new DepartamentoResponse(guardado.getId(), guardado.getNombre());
   }
 
   @Override
