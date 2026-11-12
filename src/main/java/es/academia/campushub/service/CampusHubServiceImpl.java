@@ -12,7 +12,6 @@ import org.springframework.stereotype.Service;
  * Punto de entrada de la tarea. Sustituye cada stub por una implementación real. NO hay entidades,
  * repositorios ni documentos entregados.
  */
-
 @Service
 public class CampusHubServiceImpl implements CampusHubService {
 
