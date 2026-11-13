@@ -3,13 +3,17 @@ package es.academia.campushub.service;
 import es.academia.campushub.controller.dto.*;
 import es.academia.campushub.entity.Departamento;
 import es.academia.campushub.entity.Docente;
+import es.academia.campushub.entity.Etiqueta;
+import es.academia.campushub.mapper.EtiquetaMapper;
 import es.academia.campushub.repository.DepartamentoRepository;
 import es.academia.campushub.repository.DocenteRepository;
-import es.academia.campushub.util.exception.InvalidInputException;
-import es.academia.campushub.util.exception.PersistenciaPendienteException;
+import es.academia.campushub.repository.EtiquetaRepository;
+import es.academia.campushub.util.Validaciones;
+import es.academia.campushub.util.excepcion.InvalidInputException;
+import es.academia.campushub.util.excepcion.PersistenciaPendienteException;
 import java.util.List;
 
-import es.academia.campushub.util.exception.ResourceNotFoundException;
+import es.academia.campushub.util.excepcion.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -21,11 +25,13 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   private final DepartamentoRepository departamentoRepository;
   private final DocenteRepository docenteRepository;
+  private final EtiquetaRepository etiquetaRepository;
 
   public CampusHubServiceImpl(
-          DepartamentoRepository departamentoRepository, DocenteRepository docenteRepository) {
+          DepartamentoRepository departamentoRepository, DocenteRepository docenteRepository, EtiquetaRepository etiquetaRepository) {
     this.departamentoRepository = departamentoRepository;
     this.docenteRepository = docenteRepository;
+      this.etiquetaRepository = etiquetaRepository;
   }
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
@@ -129,7 +135,10 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public EtiquetaResponse crearEtiqueta(CreateEtiquetaRequest request) {
-    throw new PersistenciaPendienteException("crearEtiqueta");
+    String nombre = Validaciones.texto(request.nombre(), "nombre", 50);
+    Etiqueta etiqueta = new Etiqueta();
+    etiqueta.setNombre(nombre);
+    return EtiquetaMapper.toResponse(etiquetaRepository.save(etiqueta));
   }
 
   @Override
