@@ -29,10 +29,10 @@ public class CampusHubServiceImpl implements CampusHubService {
   private final ActividadRepository actividadRepository;
 
   public CampusHubServiceImpl(
-      DepartamentoRepository departamentoRepository,
-      DocenteRepository docenteRepository,
-      EtiquetaRepository etiquetaRepository,
-      ActividadRepository actividadRepository) {
+          DepartamentoRepository departamentoRepository,
+          DocenteRepository docenteRepository,
+          EtiquetaRepository etiquetaRepository,
+          ActividadRepository actividadRepository) {
     this.departamentoRepository = departamentoRepository;
     this.docenteRepository = docenteRepository;
     this.etiquetaRepository = etiquetaRepository;
@@ -68,18 +68,18 @@ public class CampusHubServiceImpl implements CampusHubService {
   @Override
   public DocenteResponse crearDocente(CreateDocenteRequest request) {
     if (request.nombre() == null
-        || request.nombre().isBlank()
-        || request.apellidos() == null
-        || request.apellidos().isBlank()
-        || request.email() == null
-        || request.email().isBlank()
-        || request.departamentoId() == null) {
+            || request.nombre().isBlank()
+            || request.apellidos() == null
+            || request.apellidos().isBlank()
+            || request.email() == null
+            || request.email().isBlank()
+            || request.departamentoId() == null) {
       throw new InvalidInputException("Nombre, apellidos, email y departamento son obligatorios");
     }
     Departamento departamento =
-        departamentoRepository
-            .findById(request.departamentoId())
-            .orElseThrow(() -> new ResourceNotFoundException("El departamento no existe"));
+            departamentoRepository
+                    .findById(request.departamentoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("El departamento no existe"));
 
     Docente docente = new Docente();
     docente.setNombre(request.nombre().trim());
@@ -89,11 +89,11 @@ public class CampusHubServiceImpl implements CampusHubService {
 
     Docente guardado = docenteRepository.save(docente);
     return new DocenteResponse(
-        guardado.getId(),
-        guardado.getNombre(),
-        guardado.getApellidos(),
-        guardado.getEmail(),
-        guardado.getDepartamento().getId());
+            guardado.getId(),
+            guardado.getNombre(),
+            guardado.getApellidos(),
+            guardado.getEmail(),
+            guardado.getDepartamento().getId());
   }
 
   @Override
@@ -108,9 +108,9 @@ public class CampusHubServiceImpl implements CampusHubService {
     }
     Long docenteId = Validaciones.id(request.docenteId(), "docenteId");
     Docente docente =
-        docenteRepository
-            .findById(docenteId)
-            .orElseThrow(() -> new ResourceNotFoundException("El docente responsable no existe"));
+            docenteRepository
+                    .findById(docenteId)
+                    .orElseThrow(() -> new ResourceNotFoundException("El docente responsable no existe"));
 
     Actividad actividad = new Actividad();
     actividad.setTitulo(titulo);
@@ -129,8 +129,8 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   private Actividad buscarActividad(Long id) {
     return actividadRepository
-        .findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("La actividad no existe"));
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("La actividad no existe"));
   }
 
   @Override
@@ -145,7 +145,7 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public SeguimientoResponse registrarSeguimiento(
-      Long actividadId, CreateSeguimientoRequest request) {
+          Long actividadId, CreateSeguimientoRequest request) {
     throw new PersistenciaPendienteException("registrarSeguimiento");
   }
 
@@ -179,11 +179,21 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public void asociarEtiqueta(Long actividadId, Long etiquetaId) {
-    throw new PersistenciaPendienteException("asociarEtiqueta");
+    Actividad actividad = buscarActividad(actividadId);
+    Etiqueta etiqueta =
+            etiquetaRepository
+                    .findById(etiquetaId)
+                    .orElseThrow(() -> new ResourceNotFoundException("La etiqueta no existe"));
+    actividad.getEtiquetas().add(etiqueta);
   }
 
   @Override
   public List<ActividadResponse> actividadesPorEtiqueta(Long etiquetaId) {
-    throw new PersistenciaPendienteException("actividadesPorEtiqueta");
+    etiquetaRepository
+            .findById(etiquetaId)
+            .orElseThrow(() -> new ResourceNotFoundException("La etiqueta no existe"));
+    return actividadRepository.findByEtiquetasIdOrderById(etiquetaId).stream()
+            .map(ActividadMapper::toResponse)
+            .toList();
   }
 }
