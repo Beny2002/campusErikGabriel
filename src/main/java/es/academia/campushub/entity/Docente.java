@@ -20,20 +20,20 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Docente {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String nombre;
+  @Column(nullable = false, length = 100)
+  private String nombre;
 
-    @Column(nullable = false, length = 150)
-    private String apellidos;
+  @Column(nullable = false, length = 150)
+  private String apellidos;
 
-    @Column(nullable = false, unique = true, length = 255)
-    private String email;
+  @Column(nullable = false, unique = true, length = 255)
+  private String email;
 
-    @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "departamento_id", nullable = false)
-    private Departamento departamento;
+  @ManyToOne(optional = false, fetch = FetchType.LAZY)
+  @JoinColumn(name = "departamento_id", nullable = false)
+  private Departamento departamento;
 }

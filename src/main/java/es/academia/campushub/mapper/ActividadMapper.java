@@ -5,16 +5,16 @@ import es.academia.campushub.entity.Actividad;
 
 public final class ActividadMapper {
 
-    private ActividadMapper() {}
+  private ActividadMapper() {}
 
-    public static ActividadResponse toResponse(Actividad a) {
-        return new ActividadResponse(
-                a.getId(),
-                a.getTitulo(),
-                a.getDescripcion(),
-                a.getTipo().name(),
-                a.getFechaPrevista().toString(),
-                a.getMaxParticipantes(),
-                a.getDocente().getId());
-    }
+  public static ActividadResponse toResponse(Actividad a) {
+    return new ActividadResponse(
+        a.getId(),
+        a.getTitulo(),
+        a.getDescripcion(),
+        a.getTipo().name(),
+        a.getFechaPrevista().toString(),
+        a.getMaxParticipantes(),
+        a.getDocente().getId());
+  }
 }

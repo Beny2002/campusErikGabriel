@@ -5,9 +5,9 @@ import es.academia.campushub.entity.Etiqueta;
 
 public final class EtiquetaMapper {
 
-    private EtiquetaMapper() {}
+  private EtiquetaMapper() {}
 
-    public static EtiquetaResponse toResponse(Etiqueta etiqueta) {
-        return new EtiquetaResponse(etiqueta.getId(), etiqueta.getNombre());
-    }
+  public static EtiquetaResponse toResponse(Etiqueta etiqueta) {
+    return new EtiquetaResponse(etiqueta.getId(), etiqueta.getNombre());
+  }
 }

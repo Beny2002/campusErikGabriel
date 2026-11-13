@@ -11,9 +11,9 @@ import org.springframework.data.repository.query.Param;
 
 public interface ActividadRepository extends JpaRepository<Actividad, Long> {
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("select a from Actividad a where a.id = :id")
-    Optional<Actividad> buscarConCerrojo(@Param("id") Long id);
+  @Lock(LockModeType.PESSIMISTIC_WRITE)
+  @Query("select a from Actividad a where a.id = :id")
+  Optional<Actividad> buscarConCerrojo(@Param("id") Long id);
 
-    List<Actividad> findByEtiquetasIdOrderById(Long etiquetaId);
+  List<Actividad> findByEtiquetasIdOrderById(Long etiquetaId);
 }

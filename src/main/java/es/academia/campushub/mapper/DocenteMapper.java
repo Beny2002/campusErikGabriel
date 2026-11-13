@@ -5,14 +5,14 @@ import es.academia.campushub.entity.Docente;
 
 public final class DocenteMapper {
 
-    private DocenteMapper() {}
+  private DocenteMapper() {}
 
-    public static DocenteResponse toResponse(Docente docente) {
-        return new DocenteResponse(
-                docente.getId(),
-                docente.getNombre(),
-                docente.getApellidos(),
-                docente.getEmail(),
-                docente.getDepartamento().getId());
-    }
+  public static DocenteResponse toResponse(Docente docente) {
+    return new DocenteResponse(
+        docente.getId(),
+        docente.getNombre(),
+        docente.getApellidos(),
+        docente.getEmail(),
+        docente.getDepartamento().getId());
+  }
 }
