@@ -1,6 +1,7 @@
 package es.academia.campushub.service;
 
 import es.academia.campushub.controller.dto.*;
+import es.academia.campushub.entity.Contacto;
 import es.academia.campushub.entity.Estudiante;
 import es.academia.campushub.entity.Grupo;
 import es.academia.campushub.repository.ContactoRepository;
@@ -14,7 +15,6 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.stereotype.Service;
-import es.academia.campushub.entity.Contacto;
 
 @Service
 public class CampusHubServiceImpl implements CampusHubService {
@@ -23,13 +23,14 @@ public class CampusHubServiceImpl implements CampusHubService {
   private final ContactoRepository contactoRepository;
 
   public CampusHubServiceImpl(
-          GrupoRepository grupoRepository,
-          EstudianteRepository estudianteRepository,
-          ContactoRepository contactoRepository) {
+      GrupoRepository grupoRepository,
+      EstudianteRepository estudianteRepository,
+      ContactoRepository contactoRepository) {
     this.grupoRepository = grupoRepository;
     this.estudianteRepository = estudianteRepository;
     this.contactoRepository = contactoRepository;
   }
+
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
     throw new PersistenciaPendienteException("crearGrupo");
@@ -43,14 +44,14 @@ public class CampusHubServiceImpl implements CampusHubService {
   @Override
   public EstudianteResponse crearEstudiante(CreateEstudianteRequest request) {
     if (request == null
-            || request.nombre() == null
-            || request.nombre().isBlank()
-            || request.apellidos() == null
-            || request.apellidos().isBlank()
-            || request.email() == null
-            || request.email().isBlank()
-            || request.fechaNacimiento() == null
-            || request.grupoId() == null) {
+        || request.nombre() == null
+        || request.nombre().isBlank()
+        || request.apellidos() == null
+        || request.apellidos().isBlank()
+        || request.email() == null
+        || request.email().isBlank()
+        || request.fechaNacimiento() == null
+        || request.grupoId() == null) {
       throw new InvalidInputException("Faltan datos obligatorios del estudiante");
     }
 
@@ -66,9 +67,9 @@ public class CampusHubServiceImpl implements CampusHubService {
     }
 
     Grupo grupo =
-            grupoRepository
-                    .findById(request.grupoId())
-                    .orElseThrow(() -> new ResourceNotFoundException("No existe el grupo indicado"));
+        grupoRepository
+            .findById(request.grupoId())
+            .orElseThrow(() -> new ResourceNotFoundException("No existe el grupo indicado"));
 
     String email = request.email().trim().toLowerCase();
 
@@ -86,28 +87,28 @@ public class CampusHubServiceImpl implements CampusHubService {
     Estudiante guardado = estudianteRepository.save(estudiante);
 
     return new EstudianteResponse(
-            guardado.getId(),
-            guardado.getNombre(),
-            guardado.getApellidos(),
-            guardado.getEmail(),
-            guardado.getFechaNacimiento().toString(),
-            grupo.getId());
+        guardado.getId(),
+        guardado.getNombre(),
+        guardado.getApellidos(),
+        guardado.getEmail(),
+        guardado.getFechaNacimiento().toString(),
+        grupo.getId());
   }
 
   @Override
   public EstudianteResponse obtenerEstudiante(Long id) {
     Estudiante estudiante =
-            estudianteRepository
-                    .findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+        estudianteRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     return new EstudianteResponse(
-            estudiante.getId(),
-            estudiante.getNombre(),
-            estudiante.getApellidos(),
-            estudiante.getEmail(),
-            estudiante.getFechaNacimiento().toString(),
-            estudiante.getGrupo().getId());
+        estudiante.getId(),
+        estudiante.getNombre(),
+        estudiante.getApellidos(),
+        estudiante.getEmail(),
+        estudiante.getFechaNacimiento().toString(),
+        estudiante.getGrupo().getId());
   }
 
   @Override
@@ -154,20 +155,20 @@ public class CampusHubServiceImpl implements CampusHubService {
   @Override
   public ContactoResponse guardarContacto(Long estudianteId, UpsertContactoRequest request) {
     if (request == null
-            || request.tutorLegal() == null
-            || request.tutorLegal().isBlank()
-            || request.telefono() == null
-            || request.telefono().isBlank()
-            || request.email() == null
-            || request.email().isBlank()
-            || request.autorizado() == null) {
+        || request.tutorLegal() == null
+        || request.tutorLegal().isBlank()
+        || request.telefono() == null
+        || request.telefono().isBlank()
+        || request.email() == null
+        || request.email().isBlank()
+        || request.autorizado() == null) {
       throw new InvalidInputException("Faltan datos obligatorios del contacto");
     }
 
     Estudiante estudiante =
-            estudianteRepository
-                    .findById(estudianteId)
-                    .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+        estudianteRepository
+            .findById(estudianteId)
+            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     LocalDate fechaAutorizacion = null;
     if (request.fechaAutorizacion() != null && !request.fechaAutorizacion().isBlank()) {
@@ -182,8 +183,7 @@ public class CampusHubServiceImpl implements CampusHubService {
       throw new InvalidInputException("Indica la fecha de autorización");
     }
 
-    Contacto contacto =
-            contactoRepository.findById(estudianteId).orElseGet(Contacto::new);
+    Contacto contacto = contactoRepository.findById(estudianteId).orElseGet(Contacto::new);
 
     contacto.setEstudiante(estudiante);
     contacto.setTutorLegal(request.tutorLegal().trim());
@@ -195,37 +195,39 @@ public class CampusHubServiceImpl implements CampusHubService {
     Contacto guardado = contactoRepository.save(contacto);
 
     return new ContactoResponse(
-            estudiante.getId(),
-            guardado.getTutorLegal(),
-            guardado.getTelefono(),
-            guardado.getEmail(),
-            guardado.getAutorizado(),
-            guardado.getFechaAutorizacion() == null
-                    ? null
-                    : guardado.getFechaAutorizacion().toString());
+        estudiante.getId(),
+        guardado.getTutorLegal(),
+        guardado.getTelefono(),
+        guardado.getEmail(),
+        guardado.getAutorizado(),
+        guardado.getFechaAutorizacion() == null
+            ? null
+            : guardado.getFechaAutorizacion().toString());
   }
 
   @Override
   public ContactoResponse contacto(Long estudianteId) {
     estudianteRepository
-            .findById(estudianteId)
-            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+        .findById(estudianteId)
+        .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     Contacto contacto =
-            contactoRepository
-                    .findById(estudianteId)
-                    .orElseThrow(() -> new ResourceNotFoundException("El estudiante no tiene ficha de contacto"));
+        contactoRepository
+            .findById(estudianteId)
+            .orElseThrow(
+                () -> new ResourceNotFoundException("El estudiante no tiene ficha de contacto"));
 
     return new ContactoResponse(
-            estudianteId,
-            contacto.getTutorLegal(),
-            contacto.getTelefono(),
-            contacto.getEmail(),
-            contacto.getAutorizado(),
-            contacto.getFechaAutorizacion() == null
-                    ? null
-                    : contacto.getFechaAutorizacion().toString());
+        estudianteId,
+        contacto.getTutorLegal(),
+        contacto.getTelefono(),
+        contacto.getEmail(),
+        contacto.getAutorizado(),
+        contacto.getFechaAutorizacion() == null
+            ? null
+            : contacto.getFechaAutorizacion().toString());
   }
+
   @Override
   public EtiquetaResponse crearEtiqueta(CreateEtiquetaRequest request) {
     throw new PersistenciaPendienteException("crearEtiqueta");

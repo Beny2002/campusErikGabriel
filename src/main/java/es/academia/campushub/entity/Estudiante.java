@@ -18,31 +18,31 @@ import lombok.Setter;
 
 @Entity
 @Table(
-        name = "estudiantes",
-        uniqueConstraints = @UniqueConstraint(name = "uk_estudiante_email", columnNames = "email"),
-        indexes = @Index(name = "idx_estudiante_grupo", columnList = "grupo_id"))
+    name = "estudiantes",
+    uniqueConstraints = @UniqueConstraint(name = "uk_estudiante_email", columnNames = "email"),
+    indexes = @Index(name = "idx_estudiante_grupo", columnList = "grupo_id"))
 @Getter
 @Setter
 @NoArgsConstructor
 public class Estudiante {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, length = 100)
-    private String nombre;
+  @Column(nullable = false, length = 100)
+  private String nombre;
 
-    @Column(nullable = false, length = 150)
-    private String apellidos;
+  @Column(nullable = false, length = 150)
+  private String apellidos;
 
-    @Column(nullable = false, length = 254)
-    private String email;
+  @Column(nullable = false, length = 254)
+  private String email;
 
-    @Column(name = "fecha_nacimiento", nullable = false)
-    private LocalDate fechaNacimiento;
+  @Column(name = "fecha_nacimiento", nullable = false)
+  private LocalDate fechaNacimiento;
 
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "grupo_id", nullable = false)
-    private Grupo grupo;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "grupo_id", nullable = false)
+  private Grupo grupo;
 }

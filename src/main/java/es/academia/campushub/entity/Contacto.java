@@ -20,27 +20,27 @@ import lombok.Setter;
 @NoArgsConstructor
 public class Contacto {
 
-    @Id
-    @Column(name = "estudiante_id")
-    private Long estudianteId;
+  @Id
+  @Column(name = "estudiante_id")
+  private Long estudianteId;
 
-    @MapsId
-    @OneToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "estudiante_id", nullable = false)
-    private Estudiante estudiante;
+  @MapsId
+  @OneToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "estudiante_id", nullable = false)
+  private Estudiante estudiante;
 
-    @Column(name = "tutor_legal", nullable = false, length = 200)
-    private String tutorLegal;
+  @Column(name = "tutor_legal", nullable = false, length = 200)
+  private String tutorLegal;
 
-    @Column(nullable = false, length = 40)
-    private String telefono;
+  @Column(nullable = false, length = 40)
+  private String telefono;
 
-    @Column(length = 254)
-    private String email;
+  @Column(nullable = false, length = 254)
+  private String email;
 
-    @Column(nullable = false)
-    private Boolean autorizado;
+  @Column(nullable = false)
+  private Boolean autorizado;
 
-    @Column(name = "fecha_autorizacion")
-    private LocalDate fechaAutorizacion;
+  @Column(name = "fecha_autorizacion")
+  private LocalDate fechaAutorizacion;
 }
