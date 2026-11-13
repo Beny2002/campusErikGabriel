@@ -1,19 +1,21 @@
 package es.academia.campushub.service;
 
 import es.academia.campushub.controller.dto.*;
-import es.academia.campushub.entity.Departamento;
-import es.academia.campushub.entity.Docente;
-import es.academia.campushub.entity.Etiqueta;
+import es.academia.campushub.entity.*;
+import es.academia.campushub.mapper.ActividadMapper;
 import es.academia.campushub.mapper.EtiquetaMapper;
+import es.academia.campushub.repository.ActividadRepository;
 import es.academia.campushub.repository.DepartamentoRepository;
 import es.academia.campushub.repository.DocenteRepository;
 import es.academia.campushub.repository.EtiquetaRepository;
 import es.academia.campushub.util.Validaciones;
-import es.academia.campushub.util.excepcion.InvalidInputException;
-import es.academia.campushub.util.excepcion.PersistenciaPendienteException;
+import es.academia.campushub.util.exception.InvalidInputException;
+import es.academia.campushub.util.exception.PersistenciaPendienteException;
+
+import java.time.LocalDate;
 import java.util.List;
 
-import es.academia.campushub.util.excepcion.ResourceNotFoundException;
+import es.academia.campushub.util.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -26,12 +28,14 @@ public class CampusHubServiceImpl implements CampusHubService {
   private final DepartamentoRepository departamentoRepository;
   private final DocenteRepository docenteRepository;
   private final EtiquetaRepository etiquetaRepository;
+  private final ActividadRepository actividadRepository;
 
   public CampusHubServiceImpl(
-          DepartamentoRepository departamentoRepository, DocenteRepository docenteRepository, EtiquetaRepository etiquetaRepository) {
+          DepartamentoRepository departamentoRepository, DocenteRepository docenteRepository, EtiquetaRepository etiquetaRepository, ActividadRepository actividadRepository) {
     this.departamentoRepository = departamentoRepository;
     this.docenteRepository = docenteRepository;
       this.etiquetaRepository = etiquetaRepository;
+      this.actividadRepository = actividadRepository;
   }
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
@@ -89,7 +93,39 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public ActividadResponse crearActividad(CreateActividadRequest request) {
-    throw new PersistenciaPendienteException("crearActividad");
+    String titulo = Validaciones.texto(request.titulo(), "titulo", 150);
+    String descripcion = Validaciones.texto(request.descripcion(), "descripcion", 10000);
+    TipoActividad tipo = TipoActividad.desde(request.tipo());
+    LocalDate fecha = Validaciones.fecha(request.fechaPrevista(), "fechaPrevista");
+    Integer max = request.maxParticipantes();
+    if (max == null || max <= 0) {
+      throw new InvalidInputException("El máximo de participantes debe ser mayor que cero");
+    }
+    Long docenteId = Validaciones.id(request.docenteId(), "docenteId");
+    Docente docente =
+            docenteRepository
+                    .findById(docenteId)
+                    .orElseThrow(() -> new ResourceNotFoundException("El docente responsable no existe"));
+
+    Actividad actividad = new Actividad();
+    actividad.setTitulo(titulo);
+    actividad.setDescripcion(descripcion);
+    actividad.setTipo(tipo);
+    actividad.setFechaPrevista(fecha);
+    actividad.setMaxParticipantes(max);
+    actividad.setDocente(docente);
+    return ActividadMapper.toResponse(actividadRepository.save(actividad));
+  }
+
+  @Override
+  public ActividadResponse obtenerActividad(Long id) {
+    return ActividadMapper.toResponse(buscarActividad(id));
+  }
+
+  private Actividad buscarActividad(Long id) {
+    return actividadRepository
+            .findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("La actividad no existe"));
   }
 
   @Override
