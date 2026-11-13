@@ -2,10 +2,14 @@ package es.academia.campushub.service;
 
 import es.academia.campushub.controller.dto.*;
 import es.academia.campushub.entity.Departamento;
+import es.academia.campushub.entity.Docente;
 import es.academia.campushub.repository.DepartamentoRepository;
+import es.academia.campushub.repository.DocenteRepository;
 import es.academia.campushub.util.exception.InvalidInputException;
 import es.academia.campushub.util.exception.PersistenciaPendienteException;
 import java.util.List;
+
+import es.academia.campushub.util.exception.ResourceNotFoundException;
 import org.springframework.stereotype.Service;
 
 /**
@@ -16,11 +20,13 @@ import org.springframework.stereotype.Service;
 public class CampusHubServiceImpl implements CampusHubService {
 
   private final DepartamentoRepository departamentoRepository;
+  private final DocenteRepository docenteRepository;
 
-  public CampusHubServiceImpl(DepartamentoRepository departamentoRepository) {
+  public CampusHubServiceImpl(
+          DepartamentoRepository departamentoRepository, DocenteRepository docenteRepository) {
     this.departamentoRepository = departamentoRepository;
+    this.docenteRepository = docenteRepository;
   }
-
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
     throw new PersistenciaPendienteException("crearGrupo");
@@ -49,7 +55,30 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public DocenteResponse crearDocente(CreateDocenteRequest request) {
-    throw new PersistenciaPendienteException("crearDocente");
+    if (request.nombre() == null || request.nombre().isBlank()
+            || request.apellidos() == null || request.apellidos().isBlank()
+            || request.email() == null || request.email().isBlank()
+            || request.departamentoId() == null) {
+      throw new InvalidInputException("Nombre, apellidos, email y departamento son obligatorios");
+    }
+    Departamento departamento =
+            departamentoRepository
+                    .findById(request.departamentoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("El departamento no existe"));
+
+    Docente docente = new Docente();
+    docente.setNombre(request.nombre().trim());
+    docente.setApellidos(request.apellidos().trim());
+    docente.setEmail(request.email().trim());
+    docente.setDepartamento(departamento);
+
+    Docente guardado = docenteRepository.save(docente);
+    return new DocenteResponse(
+            guardado.getId(),
+            guardado.getNombre(),
+            guardado.getApellidos(),
+            guardado.getEmail(),
+            guardado.getDepartamento().getId());
   }
 
   @Override
