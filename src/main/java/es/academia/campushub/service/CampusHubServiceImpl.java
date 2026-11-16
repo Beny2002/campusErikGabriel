@@ -1,12 +1,19 @@
 package es.academia.campushub.service;
 
 import es.academia.campushub.controller.dto.*;
+import es.academia.campushub.entity.Actividad;
 import es.academia.campushub.entity.Contacto;
+import es.academia.campushub.entity.Departamento;
+import es.academia.campushub.entity.Docente;
 import es.academia.campushub.entity.Estudiante;
 import es.academia.campushub.entity.Grupo;
+import es.academia.campushub.repository.ActividadRepository;
 import es.academia.campushub.repository.ContactoRepository;
+import es.academia.campushub.repository.DepartamentoRepository;
+import es.academia.campushub.repository.DocenteRepository;
 import es.academia.campushub.repository.EstudianteRepository;
 import es.academia.campushub.repository.GrupoRepository;
+import es.academia.campushub.util.Validaciones;
 import es.academia.campushub.util.exception.BusinessConflictException;
 import es.academia.campushub.util.exception.InvalidInputException;
 import es.academia.campushub.util.exception.PersistenciaPendienteException;
@@ -15,28 +22,31 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import org.springframework.stereotype.Service;
-import es.academia.campushub.entity.Docente;
-import es.academia.campushub.repository.DocenteRepository;
-import es.academia.campushub.util.Validaciones;
 
 @Service
 public class CampusHubServiceImpl implements CampusHubService {
+
   private final GrupoRepository grupoRepository;
+  private final DocenteRepository docenteRepository;
   private final EstudianteRepository estudianteRepository;
   private final ContactoRepository contactoRepository;
-  private final DocenteRepository docenteRepository;
+  private final DepartamentoRepository departamentoRepository;
+  private final ActividadRepository actividadRepository;
 
   public CampusHubServiceImpl(
           GrupoRepository grupoRepository,
           DocenteRepository docenteRepository,
           EstudianteRepository estudianteRepository,
-          ContactoRepository contactoRepository) {
+          ContactoRepository contactoRepository,
+          DepartamentoRepository departamentoRepository,
+          ActividadRepository actividadRepository) {
     this.grupoRepository = grupoRepository;
     this.docenteRepository = docenteRepository;
     this.estudianteRepository = estudianteRepository;
     this.contactoRepository = contactoRepository;
+    this.departamentoRepository = departamentoRepository;
+    this.actividadRepository = actividadRepository;
   }
-
 
   @Override
   public GrupoResponse crearGrupo(CreateGrupoRequest request) {
@@ -61,28 +71,39 @@ public class CampusHubServiceImpl implements CampusHubService {
     Grupo guardado = grupoRepository.save(grupo);
 
     return new GrupoResponse(
-            guardado.getId(),
-            guardado.getNombre(),
-            guardado.getNivel(),
-            tutor.getId());
+            guardado.getId(), guardado.getNombre(), guardado.getNivel(), tutor.getId());
   }
 
   @Override
   public DepartamentoResponse crearDepartamento(CreateDepartamentoRequest request) {
-    throw new PersistenciaPendienteException("crearDepartamento");
+    if (request == null) {
+      throw new InvalidInputException("Faltan datos del departamento");
+    }
+
+    String nombre = Validaciones.texto(request.nombre(), "nombre", 100);
+
+    if (departamentoRepository.existsByNombre(nombre)) {
+      throw new BusinessConflictException("Ya existe un departamento con ese nombre");
+    }
+
+    Departamento departamento = new Departamento();
+    departamento.setNombre(nombre);
+
+    Departamento guardado = departamentoRepository.save(departamento);
+    return new DepartamentoResponse(guardado.getId(), guardado.getNombre());
   }
 
   @Override
   public EstudianteResponse crearEstudiante(CreateEstudianteRequest request) {
     if (request == null
-        || request.nombre() == null
-        || request.nombre().isBlank()
-        || request.apellidos() == null
-        || request.apellidos().isBlank()
-        || request.email() == null
-        || request.email().isBlank()
-        || request.fechaNacimiento() == null
-        || request.grupoId() == null) {
+            || request.nombre() == null
+            || request.nombre().isBlank()
+            || request.apellidos() == null
+            || request.apellidos().isBlank()
+            || request.email() == null
+            || request.email().isBlank()
+            || request.fechaNacimiento() == null
+            || request.grupoId() == null) {
       throw new InvalidInputException("Faltan datos obligatorios del estudiante");
     }
 
@@ -98,9 +119,9 @@ public class CampusHubServiceImpl implements CampusHubService {
     }
 
     Grupo grupo =
-        grupoRepository
-            .findById(request.grupoId())
-            .orElseThrow(() -> new ResourceNotFoundException("No existe el grupo indicado"));
+            grupoRepository
+                    .findById(request.grupoId())
+                    .orElseThrow(() -> new ResourceNotFoundException("No existe el grupo indicado"));
 
     String email = request.email().trim().toLowerCase();
 
@@ -118,28 +139,28 @@ public class CampusHubServiceImpl implements CampusHubService {
     Estudiante guardado = estudianteRepository.save(estudiante);
 
     return new EstudianteResponse(
-        guardado.getId(),
-        guardado.getNombre(),
-        guardado.getApellidos(),
-        guardado.getEmail(),
-        guardado.getFechaNacimiento().toString(),
-        grupo.getId());
+            guardado.getId(),
+            guardado.getNombre(),
+            guardado.getApellidos(),
+            guardado.getEmail(),
+            guardado.getFechaNacimiento().toString(),
+            grupo.getId());
   }
 
   @Override
   public EstudianteResponse obtenerEstudiante(Long id) {
     Estudiante estudiante =
-        estudianteRepository
-            .findById(id)
-            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+            estudianteRepository
+                    .findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     return new EstudianteResponse(
-        estudiante.getId(),
-        estudiante.getNombre(),
-        estudiante.getApellidos(),
-        estudiante.getEmail(),
-        estudiante.getFechaNacimiento().toString(),
-        estudiante.getGrupo().getId());
+            estudiante.getId(),
+            estudiante.getNombre(),
+            estudiante.getApellidos(),
+            estudiante.getEmail(),
+            estudiante.getFechaNacimiento().toString(),
+            estudiante.getGrupo().getId());
   }
 
   @Override
@@ -154,7 +175,19 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public ActividadResponse obtenerActividad(Long id) {
-    throw new PersistenciaPendienteException("obtenerActividad");
+    Actividad actividad =
+            actividadRepository
+                    .findById(id)
+                    .orElseThrow(() -> new ResourceNotFoundException("No existe la actividad"));
+
+    return new ActividadResponse(
+            actividad.getId(),
+            actividad.getTitulo(),
+            actividad.getDescripcion(),
+            actividad.getTipo().name(),
+            actividad.getFechaPrevista().toString(),
+            actividad.getMaxParticipantes(),
+            actividad.getDocente().getId());
   }
 
   @Override
@@ -169,7 +202,7 @@ public class CampusHubServiceImpl implements CampusHubService {
 
   @Override
   public SeguimientoResponse registrarSeguimiento(
-      Long actividadId, CreateSeguimientoRequest request) {
+          Long actividadId, CreateSeguimientoRequest request) {
     throw new PersistenciaPendienteException("registrarSeguimiento");
   }
 
@@ -186,20 +219,20 @@ public class CampusHubServiceImpl implements CampusHubService {
   @Override
   public ContactoResponse guardarContacto(Long estudianteId, UpsertContactoRequest request) {
     if (request == null
-        || request.tutorLegal() == null
-        || request.tutorLegal().isBlank()
-        || request.telefono() == null
-        || request.telefono().isBlank()
-        || request.email() == null
-        || request.email().isBlank()
-        || request.autorizado() == null) {
+            || request.tutorLegal() == null
+            || request.tutorLegal().isBlank()
+            || request.telefono() == null
+            || request.telefono().isBlank()
+            || request.email() == null
+            || request.email().isBlank()
+            || request.autorizado() == null) {
       throw new InvalidInputException("Faltan datos obligatorios del contacto");
     }
 
     Estudiante estudiante =
-        estudianteRepository
-            .findById(estudianteId)
-            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+            estudianteRepository
+                    .findById(estudianteId)
+                    .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     LocalDate fechaAutorizacion = null;
     if (request.fechaAutorizacion() != null && !request.fechaAutorizacion().isBlank()) {
@@ -215,7 +248,6 @@ public class CampusHubServiceImpl implements CampusHubService {
     }
 
     Contacto contacto = contactoRepository.findById(estudianteId).orElseGet(Contacto::new);
-
     contacto.setEstudiante(estudiante);
     contacto.setTutorLegal(request.tutorLegal().trim());
     contacto.setTelefono(request.telefono().trim());
@@ -226,37 +258,37 @@ public class CampusHubServiceImpl implements CampusHubService {
     Contacto guardado = contactoRepository.save(contacto);
 
     return new ContactoResponse(
-        estudiante.getId(),
-        guardado.getTutorLegal(),
-        guardado.getTelefono(),
-        guardado.getEmail(),
-        guardado.getAutorizado(),
-        guardado.getFechaAutorizacion() == null
-            ? null
-            : guardado.getFechaAutorizacion().toString());
+            estudiante.getId(),
+            guardado.getTutorLegal(),
+            guardado.getTelefono(),
+            guardado.getEmail(),
+            guardado.getAutorizado(),
+            guardado.getFechaAutorizacion() == null
+                    ? null
+                    : guardado.getFechaAutorizacion().toString());
   }
 
   @Override
   public ContactoResponse contacto(Long estudianteId) {
     estudianteRepository
-        .findById(estudianteId)
-        .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
+            .findById(estudianteId)
+            .orElseThrow(() -> new ResourceNotFoundException("No existe el estudiante"));
 
     Contacto contacto =
-        contactoRepository
-            .findById(estudianteId)
-            .orElseThrow(
-                () -> new ResourceNotFoundException("El estudiante no tiene ficha de contacto"));
+            contactoRepository
+                    .findById(estudianteId)
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("El estudiante no tiene ficha de contacto"));
 
     return new ContactoResponse(
-        estudianteId,
-        contacto.getTutorLegal(),
-        contacto.getTelefono(),
-        contacto.getEmail(),
-        contacto.getAutorizado(),
-        contacto.getFechaAutorizacion() == null
-            ? null
-            : contacto.getFechaAutorizacion().toString());
+            estudianteId,
+            contacto.getTutorLegal(),
+            contacto.getTelefono(),
+            contacto.getEmail(),
+            contacto.getAutorizado(),
+            contacto.getFechaAutorizacion() == null
+                    ? null
+                    : contacto.getFechaAutorizacion().toString());
   }
 
   @Override
