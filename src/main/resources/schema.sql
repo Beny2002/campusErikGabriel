@@ -9,10 +9,13 @@ END IF;
 RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+@@
 
 DROP TRIGGER IF EXISTS trg_validar_fecha_nacimiento_estudiante ON estudiantes;
+@@
 
 CREATE TRIGGER trg_validar_fecha_nacimiento_estudiante
     BEFORE INSERT OR UPDATE ON estudiantes
-                         FOR EACH ROW
-                         EXECUTE FUNCTION validar_fecha_nacimiento_estudiante();
+                              FOR EACH ROW
+                              EXECUTE FUNCTION validar_fecha_nacimiento_estudiante();
+@@
