@@ -28,7 +28,7 @@ public final class Validaciones {
   }
 
   public static String email(String valor, String campo) {
-    String limpio = texto(valor, campo, 255);
+    String limpio = texto(valor, campo, 254);
     if (!limpio.contains("@")) {
       throw new InvalidInputException("El campo " + campo + " no es un correo válido");
     }

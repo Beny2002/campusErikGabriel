@@ -15,12 +15,14 @@ import java.time.LocalDate;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import org.hibernate.annotations.Check;
 
 @Entity
 @Table(
     name = "estudiantes",
     uniqueConstraints = @UniqueConstraint(name = "uk_estudiante_email", columnNames = "email"),
     indexes = @Index(name = "idx_estudiante_grupo", columnList = "grupo_id"))
+@Check(constraints = "fecha_nacimiento < CURRENT_DATE")
 @Getter
 @Setter
 @NoArgsConstructor

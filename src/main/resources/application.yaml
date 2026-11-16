@@ -13,7 +13,8 @@ spring:
     open-in-view: false
     defer-datasource-initialization: true
     hibernate:
-    ddl-auto: update # Solo para la práctica: en producción usar migraciones  mongodb:
+      ddl-auto: update # Solo para la práctica: en producción usar migraciones
+  mongodb:
     uri: ${MONGODB_URI:mongodb://localhost:27017/campushub}
   data:
     redis:

@@ -1,6 +1,6 @@
 # Modelo de datos — CampusHub
 
-> Versión inicial del diseño. Puede cambiar durante el desarrollo; los cambios se anotarán al final en "Decisiones que cambiaron".
+> Diseño final implementado. Los cambios respecto al diseño inicial están al final y en `docs/decisiones-tecnicas.md`. Hay detalle adicional de grupos, estudiantes y contacto en `docs/modelo-datos-parte-b.md`.
 
 ## 1. Reparto entre PostgreSQL y MongoDB
 
@@ -14,12 +14,12 @@
 ```mermaid
 erDiagram
   DEPARTAMENTO ||--o{ DOCENTE : tiene
-  DOCENTE ||--o{ GRUPO : "es tutor de"
-  GRUPO ||--o{ ESTUDIANTE : contiene
-  ESTUDIANTE ||--o| FICHA_CONTACTO : tiene
+  DOCENTE ||--o{ GRUPOS : "es tutor de"
+  GRUPOS ||--o{ ESTUDIANTES : contiene
+  ESTUDIANTES ||--o| CONTACTOS : tiene
   DOCENTE ||--o{ ACTIVIDAD : "es responsable de"
   ACTIVIDAD ||--o{ INSCRIPCION : recibe
-  ESTUDIANTE ||--o{ INSCRIPCION : realiza
+  ESTUDIANTES ||--o{ INSCRIPCION : realiza
   ACTIVIDAD ||--o{ ACTIVIDAD_ETIQUETA : tiene
   ETIQUETA ||--o{ ACTIVIDAD_ETIQUETA : "se aplica en"
 
@@ -34,13 +34,13 @@ erDiagram
     varchar email UK
     bigint departamento_id FK
   }
-  GRUPO {
+  GRUPOS {
     bigint id PK
     varchar nombre
     varchar nivel
     bigint tutor_docente_id FK
   }
-  ESTUDIANTE {
+  ESTUDIANTES {
     bigint id PK
     varchar nombre
     varchar apellidos
@@ -48,9 +48,8 @@ erDiagram
     date fecha_nacimiento
     bigint grupo_id FK
   }
-  FICHA_CONTACTO {
-    bigint id PK
-    bigint estudiante_id FK
+  CONTACTOS {
+    bigint estudiante_id PK
     varchar tutor_legal
     varchar telefono
     varchar email
@@ -70,7 +69,7 @@ erDiagram
     bigint id PK
     bigint actividad_id FK
     bigint estudiante_id FK
-    timestamp fecha_inscripcion
+    timestamptz fecha_inscripcion
   }
   ETIQUETA {
     bigint id PK
@@ -82,46 +81,28 @@ erDiagram
   }
 ```
 
-## 3. Tablas, restricciones e índices
+En `contactos` la clave primaria es también clave foránea a `estudiantes`.
 
-| Tabla | Qué guarda | Restricciones principales |
-|---|---|---|
-| `departamento` | Departamentos del centro | `nombre` único y obligatorio |
-| `docente` | Docentes | `email` único; `departamento_id` obligatorio (clave foránea) |
-| `grupo` | Grupos de estudiantes | `tutor_docente_id` clave foránea a `docente` |
-| `estudiante` | Estudiantes | `email` único; `grupo_id` clave foránea; fecha de nacimiento anterior a hoy |
-| `ficha_contacto` | Datos del tutor legal | `estudiante_id` único (máximo una ficha) y obligatorio (no existe sin estudiante) |
-| `actividad` | Actividades | `max_participantes` mayor que 0; `docente_id` obligatorio; `descripcion` como texto largo |
-| `inscripcion` | Inscripción de un estudiante a una actividad | Pareja (`actividad_id`, `estudiante_id`) única; guarda la fecha de inscripción |
-| `etiqueta` | Etiquetas o competencias | `nombre` único |
-| `actividad_etiqueta` | Une actividades con etiquetas (muchos a muchos) | Clave primaria compuesta (`actividad_id`, `etiqueta_id`) |
+## 3. Restricciones e índices
 
-### Índices previstos
-
-- Los campos `UNIQUE` (emails, nombres, parejas) crean su índice automáticamente.
-- `estudiante.grupo_id`, `docente.departamento_id` y `actividad.docente_id`: para consultar por clave foránea.
-- `inscripcion.estudiante_id`: para el historial de un estudiante (RF08).
-- `actividad_etiqueta.etiqueta_id`: para consultar las actividades de una etiqueta (RF10).
-
-### Longitudes propuestas (a revisar)
-
-| Campo | Longitud |
+| Tabla | Restricciones principales |
 |---|---|
-| nombre de persona | 100 |
-| apellidos | 150 |
-| email | 255 |
-| título de actividad | 150 |
-| nombre de departamento | 100 |
-| nombre de etiqueta | 50 |
-| descripción de actividad | texto largo (`TEXT`) |
+| `departamento` | `nombre` único, obligatorio, máx. 100 |
+| `docente` | `email` único, máx. 255; departamento obligatorio; índice `idx_docente_departamento` |
+| `grupos` | nombre (100) y nivel (50) obligatorios; tutor docente obligatorio |
+| `estudiantes` | `email` único (`uk_estudiante_email`); grupo obligatorio; `CHECK` y trigger de fecha de nacimiento anterior a hoy; índice `idx_estudiante_grupo` |
+| `contactos` | clave primaria = clave foránea al estudiante (una ficha como máximo, no existe sin estudiante) |
+| `actividad` | `CHECK (max_participantes > 0)`; `descripcion` de tipo `TEXT`; docente obligatorio; tipo guardado como texto; índice `idx_actividad_docente` |
+| `inscripcion` | pareja (`actividad_id`, `estudiante_id`) única (`uk_inscripcion_actividad_estudiante`); fecha obligatoria; índice `idx_inscripcion_estudiante` |
+| `etiqueta` | `nombre` único, máx. 50 |
+| `actividad_etiqueta` | clave primaria compuesta (`actividad_id`, `etiqueta_id`); índice por `etiqueta_id` |
 
-### Borrado (propuesta)
+### Borrado
 
-La API no ofrece operaciones de borrado, así que se propone que las claves foráneas **impidan** borrar un registro que tenga datos relacionados (por ejemplo, un docente con actividades), para no dejar referencias rotas.
+La API no ofrece borrado. Las claves foráneas no tienen cascada, así que la base de datos impide
+borrar un registro que otros referencian (por ejemplo, un docente con actividades).
 
 ## 4. MongoDB: colección `seguimientos`
-
-Un documento por cada registro de seguimiento de una actividad:
 
 ```json
 {
@@ -133,14 +114,15 @@ Un documento por cada registro de seguimiento de una actividad:
 }
 ```
 
-- `datos` es un objeto libre: se guarda tal cual llega, así cada tipo de seguimiento puede tener su estructura y aparecer tipos nuevos sin tocar nada.
-- Índice sobre (`actividadId`, `creadoEn`): para recuperar los seguimientos de una actividad ordenados por fecha.
-- Validación mínima: `actividadId`, `tipo` y `creadoEn` obligatorios y con tipo correcto; `datos` de tipo objeto sin fijar sus campos.
+- `datos` es un objeto libre, guardado tal cual llega.
+- Índice sobre (`actividadId`, `creadoEn`).
+- Validación mínima (`$jsonSchema`): `actividadId`, `tipo` y `creadoEn` obligatorios y con su tipo;
+  `datos` de tipo objeto sin fijar sus campos. Se aplica al arrancar (`MongoInicializador`).
 
 ## 5. Riesgo de usar dos motores
 
-La actividad vive en PostgreSQL y sus seguimientos en MongoDB, y no hay una transacción que cubra los dos. Si se registra un seguimiento para una actividad que no existe, o se borra la actividad y quedan seguimientos huérfanos, aparece una inconsistencia. Para reducir el riesgo, el servicio comprobará que la actividad existe en PostgreSQL antes de guardar en MongoDB.
+Ver `docs/decisiones-tecnicas.md`, apartado 4.
 
 ## 6. Decisiones que cambiaron
 
-_(Vacío por ahora. Se irá completando durante el desarrollo.)_
+Ver `docs/decisiones-tecnicas.md`, apartado 6.
